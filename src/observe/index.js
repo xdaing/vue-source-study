@@ -1,3 +1,5 @@
+import { rewriteArrayProto } from './array'
+
 export function observe(data) {
     // 对 data 对象进行劫持
     if (typeof data !== 'object' || data === null) return
@@ -6,15 +8,28 @@ export function observe(data) {
 }
 
 function Observer(data) {
+    // 将当前 Observer 的实例放在数据上
+    // 同时也给数据加了标识
+    Object.defineProperty(data, '__observer__', {
+        value: this,
+        enumerable: false //  不可枚举否则遍历时会获取到
+    })
     // data 也可能是数数组
     if (Array.isArray(data)) {
-
+        // 通过重写数组变异方法来实现数组的响应式
+        // 数组中的元素也可能是对象，对数组中为对象的元素进行响应式处理
+        data.__proto__ = rewriteArrayProto
+        this.observerArray(data)
     } else this.reactiveProperties(data)
 }
 
 Observer.prototype.reactiveProperties = function (data) {
     // 将数据对象中的所有属性全都重新定义
     Object.keys(data).forEach(key => defineReactive(data, key, data[key]))
+}
+
+Observer.prototype.observerArray = function (data) {
+    data.forEach(item => observe(item))
 }
 
 // 用于定义响应式的数据,响应式的核心
