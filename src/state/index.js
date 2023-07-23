@@ -12,4 +12,19 @@ function initData(vm) {
     vm._data = data
     // 将 data 中的数据处理成响应式的
     observe(data)
+    proxy(vm, vm._data)
+}
+
+// 将 _data 中的响应式数据代理到实例上，方便取值
+function proxy(vm, target) {
+    Object.keys(target).forEach(key => {
+        Object.defineProperty(vm, key, {
+            get() {
+                return target[key]
+            },
+            set(newValue) {
+                target[key] = newValue
+            }
+        })
+    })
 }
